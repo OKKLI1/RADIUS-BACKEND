@@ -21,7 +21,8 @@ class GroupCreate(BaseModel):
     idle_timeout: Optional[int] = None         # segundos
 
 
-@router.get("/", summary="Listar grupos")
+@router.get("", summary="x")
+@router.get("/", include_in_schema=False, summary="Listar grupos")
 def list_groups():
     """Lista todos los grupos con sus atributos de check y reply."""
     groups_check = query("SELECT DISTINCT groupname FROM radgroupcheck ORDER BY groupname")

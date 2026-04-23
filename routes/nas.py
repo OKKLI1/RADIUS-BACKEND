@@ -24,7 +24,8 @@ class NASUpdate(BaseModel):
     description: Optional[str] = None
 
 
-@router.get("/", summary="Listar clientes NAS")
+@router.get("", summary="x")
+@router.get("/", include_in_schema=False, summary="Listar clientes NAS")
 def list_nas():
     return query("SELECT id, nasname, shortname, type, ports, secret, description FROM nas ORDER BY shortname")
 

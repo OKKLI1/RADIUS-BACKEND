@@ -1,7 +1,28 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from routes import auth, users, groups, nas, sessions, logs, reports
+from routes import (
+    auth,
+    users,
+    groups,
+    nas,
+    sessions,
+    logs,
+    reports,
+    batch,
+    profiles,
+    vouchers,
+    config_routes,
+    hotspots,
+    user_groups,
+    hunt_groups,
+    attributes,
+    realm_proxy,
+    ip_pool,
+    accounting,
+)
+
+
 
 app = FastAPI(
     title="RADIUS Manager API",
@@ -9,6 +30,7 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/docs",       # Swagger UI
     redoc_url="/redoc",     # ReDoc
+        
 )
 
 # ── CORS ───────────────────────────────────────────────────────────────────────
@@ -29,7 +51,17 @@ app.include_router(nas.router)
 app.include_router(sessions.router)
 app.include_router(logs.router)
 app.include_router(reports.router)
-
+app.include_router(batch.router)
+app.include_router(profiles.router)
+app.include_router(vouchers.router)
+app.include_router(config_routes.router)
+app.include_router(hotspots.router)
+app.include_router(user_groups.router)
+app.include_router(hunt_groups.router)
+app.include_router(attributes.router)
+app.include_router(realm_proxy.router)
+app.include_router(ip_pool.router)
+app.include_router(accounting.router)
 
 @app.get("/", tags=["Root"])
 def root():

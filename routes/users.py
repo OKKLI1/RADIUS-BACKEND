@@ -62,7 +62,8 @@ def _user_exists(username: str) -> bool:
 
 # ── Endpoints ──────────────────────────────────────────────────────────────────
 
-@router.get("/", summary="Listar todos los usuarios")
+@router.get("", summary="Listar todos los usuarios")
+@router.get("/", include_in_schema=False)
 def list_users():
     """
     Retorna la lista de usuarios con su grupo y atributos básicos.
@@ -97,7 +98,8 @@ def get_user(username: str):
     return _get_user_attributes(username)
 
 
-@router.post("/", status_code=201, summary="Crear usuario")
+@router.post("", status_code=201, summary="Crear usuario")
+@router.post("/", status_code=201, include_in_schema=False)
 def create_user(data: UserCreate):
     if _user_exists(data.username):
         raise HTTPException(status_code=409, detail="El usuario ya existe")
@@ -136,6 +138,7 @@ def create_user(data: UserCreate):
 
 
 @router.put("/{username}", summary="Actualizar usuario")
+@router.put("/{username}/", include_in_schema=False)
 def update_user(username: str, data: UserUpdate):
     if not _user_exists(username):
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
@@ -188,6 +191,7 @@ def update_user(username: str, data: UserUpdate):
 
 
 @router.delete("/{username}", summary="Eliminar usuario")
+@router.delete("/{username}/", include_in_schema=False)
 def delete_user(username: str):
     if not _user_exists(username):
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
@@ -201,6 +205,7 @@ def delete_user(username: str):
 
 
 @router.post("/{username}/disable", summary="Deshabilitar usuario")
+@router.post("/{username}/disable/", include_in_schema=False)
 def disable_user(username: str):
     """Agrega el atributo Auth-Type := Reject para bloquear al usuario."""
     if not _user_exists(username):
@@ -219,6 +224,7 @@ def disable_user(username: str):
 
 
 @router.post("/{username}/enable", summary="Habilitar usuario")
+@router.post("/{username}/enable/", include_in_schema=False)
 def enable_user(username: str):
     """Elimina el atributo Auth-Type := Reject para desbloquear al usuario."""
     if not _user_exists(username):

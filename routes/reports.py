@@ -98,3 +98,65 @@ def traffic_by_nas(days: int = Query(30, ge=1, le=365)):
         GROUP BY r.nasipaddress, n.shortname
         ORDER BY total_bytes DESC
     """, (days,))
+
+@router.get("/batch/summary", summary="Resumen para reportes de usuarios batch")
+@router.get("/batch/summary/", include_in_schema=False)
+def batch_summary(
+    batch_name: Optional[str] = Query(None),
+    limit: int = Query(20, ge=1, le=200),
+):
+    prefix = (batch_name or "").strip()
+    like_value = f"{prefix}%" if prefix else "%"
+
+    totals = query(
+        """
+        SELECT
+            COUNT(DISTINCT rc.username) AS total_users,
+            SUM(rc.username LIKE 'VCH-%') AS total_vouchers
+        FROM radcheck rc
+        WHERE rc.attribute = 'Cleartext-Password'
+          AND rc.username LIKE %s
+        """,
+        (like_value,),
+        fetchone=True,
+    )
+
+    recent_sessions = query(
+        """
+        SELECT
+            r.username,
+            COUNT(*) AS sessions,
+            SUM(COALESCE(r.acctinputoctets, 0) + COALESCE(r.acctoutputoctets, 0)) AS total_bytes,
+            MAX(r.acctstarttime) AS last_start
+        FROM radacct r
+        WHERE r.username LIKE %s
+        GROUP BY r.username
+        ORDER BY last_start DESC
+        LIMIT %s
+        """,
+        (like_value, limit),
+    )
+
+    last_auth = query(
+        """
+        SELECT
+            p.username,
+            p.reply,
+            p.authdate
+        FROM radpostauth p
+        WHERE p.username LIKE %s
+        ORDER BY p.authdate DESC
+        LIMIT %s
+        """,
+        (like_value, limit),
+    )
+
+    return {
+        "filter_prefix": prefix or None,
+        "totals": {
+            "total_users": int(totals["total_users"] if totals and totals["total_users"] is not None else 0),
+            "total_vouchers": int(totals["total_vouchers"] if totals and totals["total_vouchers"] is not None else 0),
+        },
+        "recent_sessions": recent_sessions,
+        "last_auth_attempts": last_auth,
+    }

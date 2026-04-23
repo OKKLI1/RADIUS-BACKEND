@@ -7,16 +7,13 @@ router = APIRouter(prefix="/api/logs", tags=["Logs"], dependencies=[Depends(veri
 
 
 @router.get("/auth", summary="Logs de autenticación")
+@router.get("/auth/", include_in_schema=False)
 def auth_logs(
     username: Optional[str] = Query(None),
-    reply: Optional[str] = Query(None, description="Access-Accept o Access-Reject"),
+    reply: Optional[str] = Query(None),
     limit: int = Query(200, ge=1, le=1000),
     offset: int = Query(0, ge=0),
 ):
-    """
-    Lee la tabla radpostauth con los intentos de autenticación.
-    Requiere que postauth esté habilitado en FreeRADIUS.
-    """
     conditions = ["1=1"]
     params = []
 
@@ -37,7 +34,7 @@ def auth_logs(
             pass        AS password_attempt,
             reply,
             authdate    AS timestamp,
-            nasipaddress
+            class       AS nas_info
         FROM radpostauth
         WHERE {where}
         ORDER BY authdate DESC
@@ -48,8 +45,8 @@ def auth_logs(
 
 
 @router.get("/auth/stats", summary="Estadísticas de autenticación")
+@router.get("/auth/stats/", include_in_schema=False)
 def auth_stats():
-    """Resumen de autenticaciones de las últimas 24h y totales."""
     total = query("""
         SELECT
             SUM(reply = 'Access-Accept') AS accepted,
