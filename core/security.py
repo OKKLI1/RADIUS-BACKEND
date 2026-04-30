@@ -28,3 +28,54 @@ def verify_token(token: str = Depends(oauth2_scheme)) -> dict:
         return payload
     except JWTError:
         raise credentials_exception
+
+
+def require_role(allowed_roles: list[str]):
+    """
+    Dependencia FastAPI que verifica rol en el JWT.
+
+    Roles disponibles:
+        admin    → acceso total
+        config   → todo excepto Config/Backup/Mail del sistema
+        helpdesk → solo registro de MACs (Calling-Station-Id)
+
+    Uso:
+        @router.post("/nas")
+        def crear_nas(payload = Depends(require_role(["admin", "config"]))):
+            ...
+    """
+    def dependency(token: str = Depends(oauth2_scheme)) -> dict:
+        exc_unauth = HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token inválido o expirado",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+        try:
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+            if payload.get("sub") is None:
+                raise exc_unauth
+        except JWTError:
+            raise exc_unauth
+
+        role = payload.get("role", "")
+        if role not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Acceso denegado. Rol requerido: {', '.join(allowed_roles)}. Tu rol: {role}",
+            )
+        return payload
+    return dependency
+
+
+# ── Shortcuts para usar en rutas ──────────────────────────────────────────────
+# admin only
+require_admin    = require_role(["admin"])
+
+# admin + config (gestión de red, usuarios RADIUS, grupos, NAS, etc.)
+require_config   = require_role(["admin", "config"])
+
+# todos los roles autenticados (helpdesk, config, admin)
+require_helpdesk = require_role(["admin", "config", "helpdesk"])
+
+# alias semántico: cualquier usuario autenticado puede ver
+require_viewer   = require_helpdesk

@@ -20,6 +20,10 @@ from routes import (
     realm_proxy,
     ip_pool,
     accounting,
+    macs,
+    folders,
+    nas,
+    tacacs,
 )
 
 
@@ -62,6 +66,11 @@ app.include_router(attributes.router)
 app.include_router(realm_proxy.router)
 app.include_router(ip_pool.router)
 app.include_router(accounting.router)
+app.include_router(macs.router)
+app.include_router(folders.router)
+app.include_router(nas.router)
+app.include_router(tacacs.router)
+
 
 @app.get("/", tags=["Root"])
 def root():
