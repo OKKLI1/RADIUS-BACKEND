@@ -17,7 +17,7 @@ def create_access_token(data: dict) -> str:
 def verify_token(token: str = Depends(oauth2_scheme)) -> dict:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Token inválido o expirado",
+        detail="Token invalido o expirado",
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
@@ -35,19 +35,14 @@ def require_role(allowed_roles: list[str]):
     Dependencia FastAPI que verifica rol en el JWT.
 
     Roles disponibles:
-        admin    → acceso total
-        config   → todo excepto Config/Backup/Mail del sistema
-        helpdesk → solo registro de MACs (Calling-Station-Id)
-
-    Uso:
-        @router.post("/nas")
-        def crear_nas(payload = Depends(require_role(["admin", "config"]))):
-            ...
+        admin    -> acceso total
+        config   -> gestion operativa, sin configuracion critica del sistema
+        helpdesk -> solo registro de MACs (Calling-Station-Id)
     """
     def dependency(token: str = Depends(oauth2_scheme)) -> dict:
         exc_unauth = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token inválido o expirado",
+            detail="Token invalido o expirado",
             headers={"WWW-Authenticate": "Bearer"},
         )
         try:
@@ -67,15 +62,8 @@ def require_role(allowed_roles: list[str]):
     return dependency
 
 
-# ── Shortcuts para usar en rutas ──────────────────────────────────────────────
-# admin only
-require_admin    = require_role(["admin"])
-
-# admin + config (gestión de red, usuarios RADIUS, grupos, NAS, etc.)
-require_config   = require_role(["admin", "config"])
-
-# todos los roles autenticados (helpdesk, config, admin)
+# Shortcuts para usar en rutas.
+require_admin = require_role(["admin"])
+require_config = require_role(["admin", "config"])
 require_helpdesk = require_role(["admin", "config", "helpdesk"])
-
-# alias semántico: cualquier usuario autenticado puede ver
-require_viewer   = require_helpdesk
+require_viewer = require_helpdesk

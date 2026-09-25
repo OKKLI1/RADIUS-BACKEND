@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, Query
 from typing import Optional
 from core.database import query
-from core.security import verify_token
+from core.security import require_config
 
-router = APIRouter(prefix="/api/reports", tags=["Reportes"], dependencies=[Depends(verify_token)])
+router = APIRouter(prefix="/api/reports", tags=["Reportes"], dependencies=[Depends(require_config)])
 
 
 @router.get("/dashboard", summary="Estadísticas generales para el dashboard")

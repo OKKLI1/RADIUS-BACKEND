@@ -4,9 +4,9 @@ from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from fastapi.responses import StreamingResponse
 from typing import Optional
 from core.database import query, execute_many
-from core.security import verify_token
+from core.security import require_config
 
-router = APIRouter(prefix="/api/batch", tags=["Batch Users"], dependencies=[Depends(verify_token)])
+router = APIRouter(prefix="/api/batch", tags=["Batch Users"], dependencies=[Depends(require_config)])
 
 
 def _user_exists(username: str) -> bool:

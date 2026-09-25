@@ -66,10 +66,10 @@ def authenticate_ad(username: str, password: str) -> bool:
 def get_ad_groups(username: str) -> list:
     """
     Obtiene grupos del usuario resolviendo GIDs via wbinfo.
-    
+
     wbinfo --user-groups devuelve GIDs numéricos.
     wbinfo --gid-info=GID devuelve: nombre_grupo:x:GID:
-    
+
     Retorna lista de nombres en minúsculas para comparación segura.
     Ej: ["axioradius-admins", "usuarios del dominio", "builtin\\users"]
     """

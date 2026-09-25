@@ -103,7 +103,7 @@ def update_mac_status(mac_id: int, data: MacStatusUpdate,
     if data.status not in ("active", "disabled", "pending"):
         raise HTTPException(400, "Status inválido. Usa: active, disabled, pending")
 
-    reg = query("SELECT id, mac, status FROM axio_mac_registry WHERE id = %s",
+    reg = query("SELECT id, mac, status, radcheck_id FROM axio_mac_registry WHERE id = %s",
                 (mac_id,), fetchone=True)
     if not reg:
         raise HTTPException(404, "MAC no encontrada.")
@@ -130,27 +130,7 @@ def update_mac_status(mac_id: int, data: MacStatusUpdate,
                  )
                )
                LIMIT 1""",
-            (reg["radcheck_id"] if "radcheck_id" in reg else mac_id,),
-            fetchone=True
-        )
-        # Buscar radcheck_id
-        reg_full = query("SELECT radcheck_id FROM axio_mac_registry WHERE id = %s",
-                         (mac_id,), fetchone=True)
-        has_company_folder = query(
-            """SELECT 1 FROM axio_mac_folders mf
-               JOIN axio_folders f ON f.id = mf.folder_id
-               WHERE mf.mac_id = %s
-               AND (
-                 f.is_company = 1
-                 OR f.parent_id IN (SELECT id FROM axio_folders WHERE is_company = 1)
-                 OR f.parent_id IN (
-                   SELECT f2.id FROM axio_folders f2
-                   JOIN axio_folders f3 ON f2.parent_id = f3.id
-                   WHERE f3.is_company = 1
-                 )
-               )
-               LIMIT 1""",
-            (reg_full["radcheck_id"],),
+            (reg["radcheck_id"],),
             fetchone=True
         )
         if not has_company_folder:
@@ -173,7 +153,7 @@ def update_mac_status(mac_id: int, data: MacStatusUpdate,
 
 
 @router.delete("/{mac_id}", summary="Eliminar MAC (todos los formatos)")
-def delete_mac(mac_id: int, payload: dict = Depends(require_helpdesk)):
+def delete_mac(mac_id: int, payload: dict = Depends(require_admin)):
     reg = query("SELECT mac, radcheck_id FROM axio_mac_registry WHERE id = %s",
                 (mac_id,), fetchone=True)
     if not reg:

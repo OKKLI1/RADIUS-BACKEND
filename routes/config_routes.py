@@ -1,6 +1,7 @@
 import os
 import smtplib
 import subprocess
+import time
 from datetime import datetime
 from email.message import EmailMessage
 from pathlib import Path
@@ -11,9 +12,9 @@ from pydantic import BaseModel, Field
 
 from core.config import settings
 from core.database import execute, query
-from core.security import verify_token
+from core.security import require_admin
 
-router = APIRouter(prefix="/api/config", tags=["Configuracion"], dependencies=[Depends(verify_token)])
+router = APIRouter(prefix="/api/config", tags=["Configuracion"], dependencies=[Depends(require_admin)])
 
 
 def _run_cmd(cmd: str) -> dict:
@@ -27,6 +28,33 @@ def _run_cmd(cmd: str) -> dict:
 def _service_status(name: str) -> bool:
     r = _run_cmd(f"systemctl is-active {name}")
     return r["output"] == "active"
+
+
+def _read_proc_stat_cpu() -> tuple[int, int]:
+    with open("/proc/stat", "r", encoding="utf-8") as f:
+        first = f.readline().strip().split()
+    if len(first) < 8 or first[0] != "cpu":
+        raise ValueError("Formato inesperado en /proc/stat")
+    values = [int(v) for v in first[1:]]
+    idle = values[3] + values[4] if len(values) > 4 else values[3]
+    total = sum(values)
+    return idle, total
+
+
+def _cpu_usage_percent(sample_seconds: float = 0.25) -> Optional[str]:
+    try:
+        idle1, total1 = _read_proc_stat_cpu()
+        time.sleep(sample_seconds)
+        idle2, total2 = _read_proc_stat_cpu()
+        total_delta = total2 - total1
+        idle_delta = idle2 - idle1
+        if total_delta <= 0:
+            return None
+        usage = (1.0 - (idle_delta / total_delta)) * 100.0
+        usage = max(0.0, min(usage, 100.0))
+        return f"{usage:.1f}%"
+    except Exception:
+        return None
 
 
 def _env_path() -> str:
@@ -154,7 +182,10 @@ def server_info():
     hostname = _run_cmd("hostname")["output"]
     uptime = _run_cmd("uptime -p")["output"]
     os_info = _run_cmd("lsb_release -d | cut -f2")["output"]
-    cpu_usage = _run_cmd("top -bn1 | grep 'Cpu(s)' | awk '{print $2}'")["output"]
+    cpu_usage = _cpu_usage_percent()
+    if not cpu_usage:
+        cpu_raw = _run_cmd("top -bn1 | grep 'Cpu(s)' | awk '{print $2}'")["output"]
+        cpu_usage = f"{cpu_raw}%" if cpu_raw else "-"
     mem = _run_cmd("free -m | awk 'NR==2{printf \"%s/%s MB (%.1f%%)\", $3,$2,$3*100/$2}'")["output"]
     disk = _run_cmd("df -h / | awk 'NR==2{print $3\"/\"$2\" (\"$5\")\"}'")["output"]
     ip_addr = _run_cmd("hostname -I | awk '{print $1}'")["output"]
@@ -170,7 +201,7 @@ def server_info():
             "os": os_info,
             "uptime": uptime,
             "ip": ip_addr,
-            "cpu_usage": f"{cpu_usage}%" if cpu_usage else "-",
+            "cpu_usage": cpu_usage or "-",
             "memory": mem,
             "disk": disk,
         },

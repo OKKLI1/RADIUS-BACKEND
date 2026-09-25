@@ -1,5 +1,7 @@
 # RADIUS Manager — Backend (FastAPI)
 
+**Actualización publicada: 25 de septiembre de 2026**
+
 Backend completo para gestionar FreeRADIUS via API REST.
 
 ## Estructura del proyecto
@@ -104,7 +106,7 @@ sudo systemctl status radius-api
 ```bash
 # 1. Login
 TOKEN=$(curl -s -X POST http://localhost:8080/api/auth/login \
-  -d "username=admin&password=admin123" | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])")
+  -d "username=admin&password=CHANGE_ME" | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])")
 
 # 2. Listar usuarios
 curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/users

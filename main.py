@@ -22,8 +22,8 @@ from routes import (
     accounting,
     macs,
     folders,
-    nas,
     tacacs,
+    mfa,
 )
 
 
@@ -34,7 +34,7 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/docs",       # Swagger UI
     redoc_url="/redoc",     # ReDoc
-        
+
 )
 
 # ── CORS ───────────────────────────────────────────────────────────────────────
@@ -68,8 +68,8 @@ app.include_router(ip_pool.router)
 app.include_router(accounting.router)
 app.include_router(macs.router)
 app.include_router(folders.router)
-app.include_router(nas.router)
 app.include_router(tacacs.router)
+app.include_router(mfa.router)
 
 
 @app.get("/", tags=["Root"])

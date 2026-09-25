@@ -2,9 +2,9 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional
 from core.database import query, execute, execute_many
-from core.security import verify_token
+from core.security import require_config
 
-router = APIRouter(prefix="/api/groups", tags=["Grupos"], dependencies=[Depends(verify_token)])
+router = APIRouter(prefix="/api/groups", tags=["Grupos"], dependencies=[Depends(require_config)])
 
 
 class GroupAttribute(BaseModel):

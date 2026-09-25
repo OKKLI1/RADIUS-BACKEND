@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, Query
 from typing import Optional
 from core.database import query, execute
-from core.security import verify_token
+from core.security import require_config
 
-router = APIRouter(prefix="/api/sessions", tags=["Sesiones"], dependencies=[Depends(verify_token)])
+router = APIRouter(prefix="/api/sessions", tags=["Sesiones"], dependencies=[Depends(require_config)])
 
 
 def _format_bytes(b: int) -> str:

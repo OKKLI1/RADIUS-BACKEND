@@ -3,12 +3,12 @@ from pydantic import BaseModel
 from typing import Optional
 
 from core.database import query, execute
-from core.security import verify_token
+from core.security import require_config
 
 router = APIRouter(
     prefix="/api/user-groups",
     tags=["User Groups"],
-    dependencies=[Depends(verify_token)],
+    dependencies=[Depends(require_config)],
 )
 
 
